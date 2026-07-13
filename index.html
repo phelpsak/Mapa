@@ -7,72 +7,162 @@
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; }
         body { background-color: #f8f9fa; color: #1e293b; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        
         .header { text-align: center; margin-bottom: 20px; }
         .header h1 { font-size: 24px; margin: 0 0 5px 0; color: #0f172a; }
         .header p { font-size: 14px; color: #64748b; margin: 0; }
         
-        .toolbar { background: white; padding: 15px 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 800px; }
-        
+        /* Cabeçalho Oficial (Só aparece no PDF) */
+        .print-only-header { display: none; }
+        .print-only-title { display: none; font-size: 14px; color: #64748b; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
+
+        /* Barra de Informações do Paciente */
+        .patient-info { background: white; padding: 20px 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; width: 100%; max-width: 900px; }
+        .info-group { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+        .info-group.large { flex: 2; }
+        .info-group label { font-size: 12px; font-weight: 600; color: #94a3b8; text-transform: uppercase; }
+        .info-group input { padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: 15px; background: #f8fafc; color: #1e293b; width: 100%; }
+        .info-group input:focus { outline: none; border-color: #8e7d67; background: #fff; }
+
+        /* Barra de Ferramentas (Cores e Botões) */
+        .toolbar { background: white; padding: 15px 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: space-between; width: 100%; max-width: 900px; align-items: flex-end; }
         .tool-group { display: flex; flex-direction: column; gap: 8px; }
         .tool-group label { font-size: 12px; font-weight: 600; color: #94a3b8; text-transform: uppercase; }
-        
-        select, button { padding: 12px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: 15px; background: #f8fafc; outline: none; }
+        select { padding: 12px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: 15px; background: #f8fafc; outline: none; min-width: 250px; }
         select:focus { border-color: #8e7d67; }
         
-        button.action-btn { background-color: #8e7d67; color: white; border: none; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+        button, .upload-btn-label { display: inline-block; padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-align: center; border: none; }
+        
+        .upload-btn-label { background-color: #3b82f6; color: white; margin-right: 10px; }
+        .upload-btn-label:hover { background-color: #2563eb; }
+        
+        button.action-btn { background-color: #8e7d67; color: white; }
         button.action-btn:hover { background-color: #766754; }
-        button.clear-btn { background-color: #e2e8f0; color: #475569; border: none; font-weight: 600; cursor: pointer; }
+        button.clear-btn { background-color: #e2e8f0; color: #475569; }
         
-        .canvas-container { position: relative; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; border: 2px solid #e2e8f0; width: 100%; max-width: 800px; height: 600px; }
+        /* Container dos Registros Clínicos (Mapa + Foto) */
+        .clinical-records { display: flex; flex-direction: column; gap: 30px; width: 100%; max-width: 900px; }
         
-        /* Imagem de fundo do rosto */
-        .face-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.6; pointer-events: none; }
+        .canvas-wrapper, .photo-wrapper { width: 100%; display: flex; flex-direction: column; }
         
+        /* Área do Rosto (Mapa Digital) */
+        .canvas-container { position: relative; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; border: 2px solid #e2e8f0; width: 100%; height: 600px; }
+        .face-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.5; pointer-events: none; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; }
         
+        /* Área da Foto Real */
+        .photo-container { display: none; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 2px dashed #cbd5e1; text-align: center; height: 600px; align-items: center; justify-content: center; }
+        .photo-container img { max-width: 100%; max-height: 100%; border-radius: 8px; object-fit: contain; }
+        
+        /* Configurações exclusivas para quando clicar em "Salvar PDF" */
         @media print {
-            body { background: white; }
-            .toolbar { display: none; }
-            .canvas-container { border: none; box-shadow: none; }
+            body { background: white; padding: 0; margin: 0; align-items: flex-start; }
+            .header, .toolbar { display: none !important; }
+            
+            .print-only-header { display: block; text-align: center; width: 100%; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; }
+            .print-only-header h2 { margin: 0; font-size: 20px; color: #0f172a; }
+            .print-only-header p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; }
+            .print-only-title { display: block; }
+            
+            .patient-info { box-shadow: none; padding: 0; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; border-radius: 0; padding-bottom: 20px; max-width: 100%; }
+            .info-group input { border: none; background: transparent; padding: 0; font-weight: bold; color: #000; font-size: 16px; }
+            
+            /* Coloca o Mapa e a Foto lado a lado na impressão */
+            .clinical-records { flex-direction: row; justify-content: space-between; max-width: 100%; gap: 15px; }
+            .canvas-wrapper, .photo-wrapper { width: 48%; }
+            
+            .canvas-container { border: none; box-shadow: none; height: 500px; }
+            .photo-container { display: flex !important; border: none; box-shadow: none; height: 500px; padding: 0; }
+            .face-bg { opacity: 0.3; }
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Mapeamento de Pontos de Aplicação</h1>
-        <p>Selecione o produto e toque na tela para registrar a dose</p>
+    <!-- Cabeçalho Oficial do PDF -->
+    <div class="print-only-header">
+        <h2>Dr. Phelipe Aquino - Biomédico Esteta</h2>
+        <p>CRBM 39219 | Av. Paulista, 2202 - São Paulo</p>
+        <h3 style="margin-top: 15px; font-size: 16px; text-transform: uppercase;">Prontuário e Mapeamento Facial</h3>
     </div>
 
+    <div class="header">
+        <h1>Mapeamento Clínico</h1>
+        <p>Registre os pontos digitais e anexe a foto das marcações físicas</p>
+    </div>
+
+    <!-- Barra de Rastreabilidade Clínica -->
+    <div class="patient-info">
+        <div class="info-group">
+            <label>Paciente:</label>
+            <input type="text" id="map-client-name" placeholder="Nome do paciente">
+        </div>
+        <div class="info-group">
+            <label>Data:</label>
+            <input type="date" id="map-date">
+        </div>
+        <div class="info-group large">
+            <label>Produto (Marca e Lote):</label>
+            <input type="text" id="map-lot" placeholder="Ex: Sculptra - Lote XXXXXX">
+        </div>
+    </div>
+
+    <!-- Barra de Ferramentas -->
     <div class="toolbar">
         <div class="tool-group">
-            <label>Produto / Cor</label>
+            <label>Legenda / Cor do Ponto</label>
             <select id="color-select">
                 <option value="#3b82f6">Toxina Botulínica (Azul)</option>
-                <option value="#ec4899">Bioestimulador - Sculptra (Rosa)</option>
-                <option value="#10b981">Preenchedor Ácido Hialurônico (Verde)</option>
-                <option value="#8b5cf6">Fios de PDO (Roxo)</option>
+                <option value="#ec4899">Bioestimulador (Rosa)</option>
+                <option value="#10b981">Preenchedor (Verde)</option>
+                <option value="#8b5cf6">Fios de Sustentação (Roxo)</option>
+                <option value="#f59e0b">Enzimas / Esvaziadores (Laranja)</option>
             </select>
         </div>
 
-        <div class="tool-group" style="justify-content: flex-end; flex-direction: row; align-items: flex-end; gap: 10px;">
-            <button class="clear-btn" onclick="clearMap()">Limpar Mapa</button>
-            <button class="action-btn" onclick="window.print()">Salvar / Exportar Imagem</button>
+        <div class="btn-group">
+            <!-- Botão de Câmera/Upload invisível, acionado pela label -->
+            <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+            <label for="camera-input" class="upload-btn-label">📸 Anexar Foto das Marcações</label>
+            
+            <button class="clear-btn" onclick="clearMap()">Limpar</button>
+            <button class="action-btn" onclick="salvarMapa()">Salvar no Prontuário</button>
         </div>
     </div>
 
-    <div class="canvas-container">
-        <!-- O arquivo rosto.png deve estar na mesma pasta do GitHub -->
-        <img src="rosto.png" alt="Mapa Facial" class="face-bg" onerror="this.style.display='none'">
-        <canvas id="mapCanvas"></canvas>
+    <!-- Registros Clínicos (Mapa Digital + Foto Real) -->
+    <div class="clinical-records">
+        
+        <!-- Lado 1: Mapa Digital -->
+        <div class="canvas-wrapper">
+            <div class="print-only-title">Planejamento Digital e Doses</div>
+            <div class="canvas-container">
+                <img src="rosto.png" alt="Mapa Facial" class="face-bg" onerror="this.style.display='none'">
+                <canvas id="mapCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Lado 2: Foto Real da Paciente -->
+        <div class="photo-wrapper" id="photo-section" style="display: none;">
+            <div class="print-only-title">Evidência Clínica (Marcação Física)</div>
+            <div class="photo-container" id="photo-display">
+                <img id="patient-photo" src="" alt="Foto do Paciente">
+            </div>
+            <button class="clear-btn no-print" onclick="removerFoto()" style="margin-top: 10px; width: 100%;">Remover Foto</button>
+        </div>
+
     </div>
 
 <script>
+    // 1. Configuração da Data
+    document.getElementById('map-date').valueAsDate = new Date();
+
+    // 2. Configuração do Canvas (Mapa Digital)
     const canvas = document.getElementById('mapCanvas');
     const ctx = canvas.getContext('2d');
     const container = document.querySelector('.canvas-container');
 
-    // Ajusta o tamanho do canvas para corresponder ao container na tela do iPad
     function resizeCanvas() {
         canvas.width = container.clientWidth;
         canvas.height = container.clientHeight;
@@ -80,16 +170,13 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Evento de clique / toque para carimbar o ponto
     canvas.addEventListener('click', function(e) {
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
         const selectedColor = document.getElementById('color-select').value;
-        
-        // Pergunta a dose (U ou ml)
-        const dose = prompt("Digite a dose (ex: 2U, 1ml, etc) ou deixe em branco:");
+        const dose = prompt("Digite a dose / volume (ex: 2U, 0.1ml):");
         
         if (dose !== null) {
             drawStamp(x, y, selectedColor, dose);
@@ -97,29 +184,63 @@
     });
 
     function drawStamp(x, y, color, text) {
-        // Desenha o círculo (Carimbo)
         ctx.beginPath();
         ctx.arc(x, y, 6, 0, 2 * Math.PI);
         ctx.fillStyle = color;
         ctx.fill();
-        
-        // Desenha um anel branco ao redor para dar contraste
         ctx.lineWidth = 2;
         ctx.strokeStyle = "#ffffff";
         ctx.stroke();
 
-        // Escreve a dose ao lado do ponto
         if (text) {
-            ctx.font = "bold 14px -apple-system, sans-serif";
+            ctx.font = "bold 15px -apple-system, sans-serif";
             ctx.fillStyle = "#1e293b";
-            ctx.fillText(text, x + 10, y + 4);
+            ctx.shadowColor = "white";
+            ctx.shadowBlur = 4;
+            ctx.fillText(text, x + 10, y + 5);
+            ctx.shadowBlur = 0; 
         }
     }
 
     function clearMap() {
-        if (confirm("Tem certeza que deseja apagar todos os pontos?")) {
+        if (confirm("Apagar todos os pontos desenhados?")) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
+    }
+
+    // 3. Configuração da Câmera / Foto
+    const cameraInput = document.getElementById('camera-input');
+    const photoSection = document.getElementById('photo-section');
+    const photoDisplay = document.getElementById('photo-display');
+    const patientPhoto = document.getElementById('patient-photo');
+
+    cameraInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                patientPhoto.src = event.target.result;
+                photoSection.style.display = 'flex';
+                photoDisplay.style.display = 'flex';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function removerFoto() {
+        patientPhoto.src = "";
+        photoSection.style.display = 'none';
+        cameraInput.value = "";
+    }
+
+    // 4. Salvar PDF
+    function salvarMapa() {
+        const nome = document.getElementById('map-client-name').value;
+        if (!nome) {
+            alert("Por favor, preencha o Nome do Paciente antes de salvar.");
+            return;
+        }
+        window.print();
     }
 </script>
 
