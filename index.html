@@ -14,7 +14,7 @@
         
         /* Cabeçalho Oficial (Só aparece no PDF) */
         .print-only-header { display: none; }
-        .print-only-title { display: none; font-size: 14px; color: #64748b; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
+        .print-only-title { display: block; font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 12px; text-align: center; }
 
         /* Barra de Informações do Paciente */
         .patient-info { background: white; padding: 20px 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; width: 100%; max-width: 900px; }
@@ -25,7 +25,7 @@
         .info-group input:focus { outline: none; border-color: #8e7d67; background: #fff; }
 
         /* Barra de Ferramentas (Cores e Botões) */
-        .toolbar { background: white; padding: 15px 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: space-between; width: 100%; max-width: 900px; align-items: flex-end; }
+        .toolbar { background: white; padding: 15px 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; justify-content: space-between; width: 100%; max-width: 900px; align-items: flex-end; }
         .tool-group { display: flex; flex-direction: column; gap: 8px; }
         .tool-group label { font-size: 12px; font-weight: 600; color: #94a3b8; text-transform: uppercase; }
         select { padding: 12px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: 15px; background: #f8fafc; outline: none; min-width: 250px; }
@@ -41,20 +41,22 @@
         button.action-btn:hover { background-color: #766754; }
         button.clear-btn { background-color: #e2e8f0; color: #475569; }
         
-        /* Container dos Registros Clínicos (Mapa + Foto) */
-        .clinical-records { display: flex; flex-direction: column; gap: 30px; width: 100%; max-width: 900px; }
+        /* Container dos Registros Clínicos (Lado a Lado na Tela e na Impressão) */
+        .clinical-records { display: flex; flex-direction: row; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 900px; justify-content: space-between; }
+        .canvas-wrapper, .photo-wrapper { flex: 1; min-width: 320px; display: flex; flex-direction: column; }
         
-        .canvas-wrapper, .photo-wrapper { width: 100%; display: flex; flex-direction: column; }
-        
-        /* Área do Rosto (Mapa Digital) */
-        .canvas-container { position: relative; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; border: 2px solid #e2e8f0; width: 100%; height: 600px; }
+        /* Área do Rosto (Mapa Digital) com proporção travada */
+        .canvas-container { position: relative; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; border: 2px solid #e2e8f0; width: 100%; aspect-ratio: 3 / 4; max-height: 65vh; margin: 0 auto; }
         .face-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.5; pointer-events: none; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; }
         
-        /* Área da Foto Real */
-        .photo-container { display: none; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 2px dashed #cbd5e1; text-align: center; height: 600px; align-items: center; justify-content: center; }
+        /* Área da Foto Real com proporção travada */
+        .photo-container { display: none; background: white; border-radius: 16px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 2px dashed #cbd5e1; text-align: center; width: 100%; aspect-ratio: 3 / 4; max-height: 65vh; align-items: center; justify-content: center; margin: 0 auto; }
         .photo-container img { max-width: 100%; max-height: 100%; border-radius: 8px; object-fit: contain; }
         
+        /* Oculta botão de remover até que tenha foto */
+        #btn-remover-foto { display: none; margin-top: 10px; width: 100%; }
+
         /* Configurações exclusivas para quando clicar em "Salvar PDF" */
         @media print {
             body { background: white; padding: 0; margin: 0; align-items: flex-start; }
@@ -63,18 +65,20 @@
             .print-only-header { display: block; text-align: center; width: 100%; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; }
             .print-only-header h2 { margin: 0; font-size: 20px; color: #0f172a; }
             .print-only-header p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; }
-            .print-only-title { display: block; }
             
             .patient-info { box-shadow: none; padding: 0; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; border-radius: 0; padding-bottom: 20px; max-width: 100%; }
             .info-group input { border: none; background: transparent; padding: 0; font-weight: bold; color: #000; font-size: 16px; }
             
-            /* Coloca o Mapa e a Foto lado a lado na impressão */
-            .clinical-records { flex-direction: row; justify-content: space-between; max-width: 100%; gap: 15px; }
-            .canvas-wrapper, .photo-wrapper { width: 48%; }
+            /* Trava o PDF para manter a mesma estrutura visual da tela */
+            .clinical-records { flex-direction: row; flex-wrap: nowrap; gap: 4%; max-width: 100%; }
+            .canvas-wrapper, .photo-wrapper { width: 48%; min-width: auto; flex: none; }
             
-            .canvas-container { border: none; box-shadow: none; height: 500px; }
-            .photo-container { display: flex !important; border: none; box-shadow: none; height: 500px; padding: 0; }
+            .canvas-container { border: none; box-shadow: none; max-height: none; aspect-ratio: 3 / 4; }
+            .photo-container { border: none; box-shadow: none; padding: 0; max-height: none; aspect-ratio: 3 / 4; display: flex !important; }
             .face-bg { opacity: 0.3; }
+            
+            /* Trava forte para esconder botões na impressão */
+            #btn-remover-foto, .no-print { display: none !important; }
         }
     </style>
 </head>
@@ -122,7 +126,7 @@
         </div>
 
         <div class="btn-group">
-            <!-- Botão de Câmera/Upload invisível, acionado pela label -->
+            <!-- Botão de Câmera/Upload -->
             <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
             <label for="camera-input" class="upload-btn-label">📸 Anexar Foto das Marcações</label>
             
@@ -144,12 +148,12 @@
         </div>
 
         <!-- Lado 2: Foto Real da Paciente -->
-        <div class="photo-wrapper" id="photo-section" style="display: none;">
+        <div class="photo-wrapper">
             <div class="print-only-title">Evidência Clínica (Marcação Física)</div>
             <div class="photo-container" id="photo-display">
                 <img id="patient-photo" src="" alt="Foto do Paciente">
             </div>
-            <button class="clear-btn no-print" onclick="removerFoto()" style="margin-top: 10px; width: 100%;">Remover Foto</button>
+            <button id="btn-remover-foto" class="clear-btn no-print" onclick="removerFoto()">Remover Foto</button>
         </div>
 
     </div>
@@ -163,17 +167,29 @@
     const ctx = canvas.getContext('2d');
     const container = document.querySelector('.canvas-container');
 
+    // A mágica para não distorcer os desenhos está aqui:
     function resizeCanvas() {
+        // Pega os pixels exatos que o bloco está ocupando na tela
         canvas.width = container.clientWidth;
         canvas.height = container.clientHeight;
     }
+    
+    // Configura o tamanho na abertura e sempre que virar o iPad
+    window.addEventListener('load', resizeCanvas);
     window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    
+    // Pequeno atraso garantido para carregar os tamanhos certos antes de desenhar
+    setTimeout(resizeCanvas, 100); 
 
     canvas.addEventListener('click', function(e) {
         const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        
+        // Calcula a posição exata do clique baseada na escala do elemento
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
         
         const selectedColor = document.getElementById('color-select').value;
         const dose = prompt("Digite a dose / volume (ex: 2U, 0.1ml):");
@@ -210,9 +226,9 @@
 
     // 3. Configuração da Câmera / Foto
     const cameraInput = document.getElementById('camera-input');
-    const photoSection = document.getElementById('photo-section');
     const photoDisplay = document.getElementById('photo-display');
     const patientPhoto = document.getElementById('patient-photo');
+    const btnRemover = document.getElementById('btn-remover-foto');
 
     cameraInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -220,8 +236,8 @@
             const reader = new FileReader();
             reader.onload = function(event) {
                 patientPhoto.src = event.target.result;
-                photoSection.style.display = 'flex';
                 photoDisplay.style.display = 'flex';
+                btnRemover.style.display = 'block';
             }
             reader.readAsDataURL(file);
         }
@@ -229,7 +245,8 @@
 
     function removerFoto() {
         patientPhoto.src = "";
-        photoSection.style.display = 'none';
+        photoDisplay.style.display = 'none';
+        btnRemover.style.display = 'none';
         cameraInput.value = "";
     }
 
