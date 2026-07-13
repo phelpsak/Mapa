@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mapeamento Facial Clínico</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; }
+        body { background-color: #f8f9fa; color: #1e293b; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 24px; margin: 0 0 5px 0; color: #0f172a; }
+        .header p { font-size: 14px; color: #64748b; margin: 0; }
+        
+        .toolbar { background: white; padding: 15px 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 800px; }
+        
+        .tool-group { display: flex; flex-direction: column; gap: 8px; }
+        .tool-group label { font-size: 12px; font-weight: 600; color: #94a3b8; text-transform: uppercase; }
+        
+        select, button { padding: 12px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: 15px; background: #f8fafc; outline: none; }
+        select:focus { border-color: #8e7d67; }
+        
+        button.action-btn { background-color: #8e7d67; color: white; border: none; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        button.action-btn:hover { background-color: #766754; }
+        button.clear-btn { background-color: #e2e8f0; color: #475569; border: none; font-weight: 600; cursor: pointer; }
+        
+        .canvas-container { position: relative; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; border: 2px solid #e2e8f0; width: 100%; max-width: 800px; height: 600px; }
+        
+        /* Imagem de fundo do rosto */
+        .face-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.6; pointer-events: none; }
+        
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; }
+        
+        @media print {
+            body { background: white; }
+            .toolbar { display: none; }
+            .canvas-container { border: none; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Mapeamento de Pontos de Aplicação</h1>
+        <p>Selecione o produto e toque na tela para registrar a dose</p>
+    </div>
+
+    <div class="toolbar">
+        <div class="tool-group">
+            <label>Produto / Cor</label>
+            <select id="color-select">
+                <option value="#3b82f6">Toxina Botulínica (Azul)</option>
+                <option value="#ec4899">Bioestimulador - Sculptra (Rosa)</option>
+                <option value="#10b981">Preenchedor Ácido Hialurônico (Verde)</option>
+                <option value="#8b5cf6">Fios de PDO (Roxo)</option>
+            </select>
+        </div>
+
+        <div class="tool-group" style="justify-content: flex-end; flex-direction: row; align-items: flex-end; gap: 10px;">
+            <button class="clear-btn" onclick="clearMap()">Limpar Mapa</button>
+            <button class="action-btn" onclick="window.print()">Salvar / Exportar Imagem</button>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <!-- O arquivo rosto.png deve estar na mesma pasta do GitHub -->
+        <img src="rosto.png" alt="Mapa Facial" class="face-bg" onerror="this.style.display='none'">
+        <canvas id="mapCanvas"></canvas>
+    </div>
+
+<script>
+    const canvas = document.getElementById('mapCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.querySelector('.canvas-container');
+
+    // Ajusta o tamanho do canvas para corresponder ao container na tela do iPad
+    function resizeCanvas() {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Evento de clique / toque para carimbar o ponto
+    canvas.addEventListener('click', function(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const selectedColor = document.getElementById('color-select').value;
+        
+        // Pergunta a dose (U ou ml)
+        const dose = prompt("Digite a dose (ex: 2U, 1ml, etc) ou deixe em branco:");
+        
+        if (dose !== null) {
+            drawStamp(x, y, selectedColor, dose);
+        }
+    });
+
+    function drawStamp(x, y, color, text) {
+        // Desenha o círculo (Carimbo)
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+        
+        // Desenha um anel branco ao redor para dar contraste
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#ffffff";
+        ctx.stroke();
+
+        // Escreve a dose ao lado do ponto
+        if (text) {
+            ctx.font = "bold 14px -apple-system, sans-serif";
+            ctx.fillStyle = "#1e293b";
+            ctx.fillText(text, x + 10, y + 4);
+        }
+    }
+
+    function clearMap() {
+        if (confirm("Tem certeza que deseja apagar todos os pontos?")) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+</script>
+
+</body>
+</html>
